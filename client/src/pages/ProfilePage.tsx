@@ -7,6 +7,7 @@ import { PageSkeleton } from '@/components/Loading';
 import { ToastContainer } from '@/components/ToastContainer';
 import { ProfileShowcase } from '@/components/ProfileShowcase';
 import { api, type CurrentUser } from '@/lib/api';
+import { isNativeApp } from '@/lib/pwa';
 import { ToastMessage } from '@/lib/types';
 import { cleanUsernameInput, formatDate, generateId, getInitials } from '@/lib/utils';
 
@@ -335,6 +336,11 @@ export default function ProfilePage() {
                           {disconnecting ? 'Disconnecting…' : 'Disconnect'}
                         </button>
                       )}
+                    </span>
+                  ) : isNativeApp() ? (
+                    // Linking needs the website's session in the browser, which the app does not share
+                    <span className="text-xs text-ink-3 text-right max-w-[12rem]">
+                      Connect Google from the HackTrack website, then use it in the app.
                     </span>
                   ) : (
                     // A full-page navigation: the server sends the browser to Google and back to this page

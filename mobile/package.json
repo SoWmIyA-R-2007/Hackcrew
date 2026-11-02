@@ -1,0 +1,27 @@
+{
+  "name": "@hacktrack/mobile",
+  "version": "0.2.0",
+  "private": true,
+  "description": "HackTrack for Android: a Capacitor shell that opens the deployed HackTrack site",
+  "type": "module",
+  "scripts": {
+    "prepare-web": "node scripts/prepare.mjs",
+    "sync": "npm run prepare-web && cap sync android",
+    "open": "cap open android",
+    "build:debug": "npm run sync && cd android && ./gradlew assembleDebug",
+    "build:release": "npm run sync && cd android && ./gradlew bundleRelease assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0"
+  }
+}

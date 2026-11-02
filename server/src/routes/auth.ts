@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
@@ -12,7 +12,8 @@ import { linkGoogleToUser, signInWithGoogleProfile } from '../google-account.js'
 import { env } from '../env.js';
 import { sendMail } from '../mailer.js';
 import { passwordResetEmail, verificationEmail } from '../emails.js';
-import { consumeToken, issueToken } from '../tokens.js';
+import { consumeAppLogin, consumeToken, issueToken } from '../tokens.js';
+import { escapeHtml } from '../mailer.js';
 import { insertUserWithUsername, isDuplicateUsername, isUsernameTaken, usernameSchema } from '../usernames.js';
 
 export const authRouter = Router();
@@ -437,10 +438,51 @@ authRouter.delete('/google', requireUser('Not signed in'), async (_req, res) => 
   res.json({ user: toPublicUser(user) });
 });
 
+// Finishes a Google sign-in started in the Android app: the one-time code from the browser plus the secret the
+// app kept. Starts the app's session
+const appLoginSchema = z.object({ token: z.string().min(20).max(200), verifier: z.string().min(43).max(128) });
+authRouter.post('/app-login', async (req, res) => {
+  const parsed = appLoginSchema.safeParse(req.body);
+  const userId = parsed.success ? await consumeAppLogin(parsed.data.token, parsed.data.verifier) : null;
+  const { users } = await collections();
+  const user = userId && (await users.findOne({ _id: userId }));
+  if (!user) {
+    res.status(400).json({ error: 'That sign-in link has expired or was already used. Try signing in with Google again.' });
+    return;
+  }
+  await createSession(res, user);
+  res.json({ user: toPublicUser(user) });
+});
+
 // --- Google sign-in -------------------------------------------------------
 
 const GOOGLE_STATE_COOKIE = 'google_oauth_state';
 const GOOGLE_COOKIE_PATH = '/api/auth/google';
+// The Android app's deep link; Google sign-in from the app finishes by opening it with a one-time code
+const APP_RETURN_URL = 'com.hacktrack.app://auth';
+const APP_LOGIN_TTL_MS = 2 * 60 * 1000;
+const isPkceChallenge = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9_-]{43}$/.test(v);
+
+/**
+ * Sends the phone's browser back to the Android app. A page with a button as well as the redirect, because
+ * some browsers only open an app from a tap
+ */
+function returnToApp(res: Response, params: Record<string, string>) {
+  const target = `${APP_RETURN_URL}?${new URLSearchParams(params)}`;
+  res
+    .status(200)
+    .set('Cache-Control', 'no-store')
+    .set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'")
+    .type('html')
+    .send(
+      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+        `<meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Back to HackTrack</title></head>` +
+        `<body style="font-family:system-ui,sans-serif;background:#f5f6f3;color:#18213a;display:grid;place-items:center;min-height:100vh;margin:0">` +
+        `<div style="text-align:center;padding:24px"><p style="font-size:18px;font-weight:600">${params.token ? 'Signed in' : 'Sign-in did not finish'}</p>` +
+        `<a href="${escapeHtml(target)}" style="display:inline-block;margin-top:12px;background:#2b44c9;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600">Open HackTrack</a>` +
+        `</div></body></html>`
+    );
+}
 
 function googleConfig() {
   if (!env.googleClientId || !env.googleClientSecret) return null;
@@ -460,17 +502,20 @@ interface GoogleUserInfo {
   picture?: string;
 }
 
-// Starts the Google flow: sign-in, or with ?link=1 connecting Google to the signed-in account
+// Starts the Google flow: sign-in, with ?link=1 connecting Google to the signed-in account, or with
+// ?app=<PKCE challenge> signing in to the Android app (which opened this in the phone's browser)
 authRouter.get('/google', async (req, res) => {
   const linking = req.query.link === '1';
+  const appChallenge = isPkceChallenge(req.query.app) ? req.query.app : null;
   const config = googleConfig();
   if (!config) {
+    if (appChallenge) return returnToApp(res, { error: 'google_not_configured' });
     res.redirect(`${linking ? '/profile' : '/login'}?error=google_not_configured`);
     return;
   }
 
   // A link request is tied to the account that started it and is checked again on the way back
-  let intent = 'signin';
+  let intent = appChallenge && !linking ? `app:${appChallenge}` : 'signin';
   if (linking) {
     const userId = await sessionUserId(req);
     if (!userId) {
@@ -506,9 +551,11 @@ authRouter.get('/google/callback', async (req, res) => {
   const stateCookie = String(req.cookies?.[GOOGLE_STATE_COOKIE] ?? '');
   const [expectedState, intent = ''] = stateCookie.split(/\.(.*)/s);
   const linkUserId = intent.startsWith('link:') ? intent.slice('link:'.length) : null;
+  const appChallenge = intent.startsWith('app:') && isPkceChallenge(intent.slice(4)) ? intent.slice(4) : null;
 
   const fail = (reason: string) => {
     res.clearCookie(GOOGLE_STATE_COOKIE, { path: GOOGLE_COOKIE_PATH });
+    if (appChallenge) return returnToApp(res, { error: reason });
     res.redirect(`${linkUserId ? '/profile' : '/login'}?error=${reason}`);
   };
 
@@ -558,6 +605,13 @@ authRouter.get('/google/callback', async (req, res) => {
 
     const result = await signInWithGoogleProfile(googleProfile);
     if ('error' in result) return fail(result.error);
+
+    // The app's session is created inside the app, from this one-time code and the app's own secret
+    if (appChallenge) {
+      const code = await issueToken(result.user._id, 'app_login', APP_LOGIN_TTL_MS, appChallenge);
+      res.clearCookie(GOOGLE_STATE_COOKIE, { path: GOOGLE_COOKIE_PATH });
+      return returnToApp(res, { token: code });
+    }
 
     await createSession(res, result.user);
     res.clearCookie(GOOGLE_STATE_COOKIE, { path: GOOGLE_COOKIE_PATH });

@@ -38,9 +38,21 @@ app.use('/api', (_req, res) => {
 // In production the built React app is served from the same origin as the API
 const clientDist = fileURLToPath(new URL('../../client/dist/', import.meta.url));
 if (env.isProduction && existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+  app.use(
+    express.static(clientDist, {
+      setHeaders(res, filePath) {
+        // Built code has the content hash in its name, so it never changes; everything else (the page, sw.js,
+        // the manifest) is checked on every load so a new deploy reaches people straight away
+        res.setHeader(
+          'Cache-Control',
+          /[\\/]assets[\\/]/.test(filePath) ? 'public, max-age=31536000, immutable' : 'no-cache'
+        );
+      },
+    })
+  );
   // Any other path is a client-side route
   app.get('/{*path}', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
     res.sendFile('index.html', { root: clientDist });
   });
 }
@@ -83,8 +95,8 @@ app.listen(env.port, () => {
       console.log(`Connected to MongoDB at ${describeMongoUri()}`);
       console.log(
         env.emailTransport === 'log'
-          ? 'Emails are printed here instead of sent (set RESEND_API_KEY to send them).'
-          : `Emails are sent through Resend from ${env.emailFrom}.`
+          ? 'Emails are printed here instead of sent (set BREVO_API_KEY or RESEND_API_KEY to send them).'
+          : `Emails are sent through ${env.emailTransport === 'brevo' ? 'Brevo' : 'Resend'} from ${env.emailFrom}.`
       );
       startReminderTimer(env.reminderIntervalMinutes);
       backfillUsernames()

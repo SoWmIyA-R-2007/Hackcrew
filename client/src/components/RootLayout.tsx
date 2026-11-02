@@ -1,6 +1,7 @@
 import { Outlet, ScrollRestoration, useRouteError } from 'react-router';
 import { LoadingBar } from './Loading';
 import { ErrorScreen } from './ErrorScreen';
+import { UpdateNotice } from './InstallApp';
 
 /** Wraps every page: the loading bar along the top, and scroll restored when going back */
 export function RootLayout() {
@@ -8,6 +9,7 @@ export function RootLayout() {
     <>
       <LoadingBar />
       <Outlet />
+      <UpdateNotice />
       <ScrollRestoration />
     </>
   );

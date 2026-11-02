@@ -26,6 +26,8 @@ Keep every hackathon you have registered for in one place. HackTrack puts all yo
 - **Import**: hackathons saved in the browser by older versions of the app can be imported into an account.
 - **Error pages**: clear screens for a missing page or item (404), no access (403), an ended session (401, which returns you to the same page after signing in), no connection (retries by itself when you are back online), the server or database being down (503/500), too many requests (429), a new version after a deploy, and unexpected crashes (with technical details).
 - **Loading**: a thin bar along the top while pages or data load, and skeletons shaped like the page. Both appear only when there is a noticeable wait, so fast pages never flicker. Pages are downloaded on demand, so the app starts faster.
+- **Installable app**: install HackTrack on a phone, tablet or computer and open it from the home screen or app list like any other app, full screen, with shortcuts to My tasks, Projects and Friends. It opens even without a connection and tells you when a new version is ready. See [Install as an app](#install-as-an-app).
+- **Android app**: a real Android app (APK for sharing, AAB for Google Play) with its own icon and splash screen. It opens your deployed site, so it always matches the website, and has Android touches: the back button, links opening in the browser, calendar export through the share sheet, and Google sign-in through the phone's browser. See [Android app](#android-app).
 - Light and dark mode follow the system setting.
 
 ## Tech stack
@@ -84,9 +86,11 @@ All variables live in the root `.env.local` and are read only by the server (`se
 | `GOOGLE_CLIENT_SECRET` | No | See [Google sign-in](#google-sign-in). |
 | `API_PORT` | No | Port of the API server in development. Default `4000`. Vite forwards `/api` requests to it. |
 | `PORT` | No | Port the server listens on in production. Most hosts set it for you. Default `4000`. |
-| `RESEND_API_KEY` | No | Sends email through [Resend](https://resend.com). Without it, emails are printed in the server terminal instead. |
-| `EMAIL_FROM` | No | Sender address, which must be on a domain verified in Resend. Default `HackTrack <onboarding@resend.dev>`, which Resend only delivers to your own Resend account address. |
-| `EMAIL_TRANSPORT` | No | Set to `log` to print emails instead of sending them even when a Resend key is set. |
+| `BREVO_API_KEY` | No | Sends email through [Brevo](https://www.brevo.com) (free plan, about 300 emails a day, no domain needed). See [Email](#email). |
+| `RESEND_API_KEY` | No | Sends email through [Resend](https://resend.com) instead (needs a domain you own). Without either key, emails are printed in the server terminal. |
+| `EMAIL_FROM` | No | Sender, as `Name <address>`. With Brevo, the address must be a sender verified in your Brevo account; with Resend, it must be on a verified domain. Default `HackTrack <onboarding@resend.dev>`. |
+| `EMAIL_TRANSPORT` | No | `log` prints emails instead of sending them, whatever keys are set. `brevo` or `resend` picks the service when both keys are set (otherwise Brevo wins). |
+| `BREVO_API_URL` | No | Brevo API address. Default `https://api.brevo.com/v3`; only change it for tests. |
 | `REMINDER_INTERVAL_MINUTES` | No | How often the server checks for reminder emails to send. Default `15`; `0` turns the built-in check off. |
 | `CRON_SECRET` | No | Lets a scheduled job call `POST /api/cron/reminders` (see [Deploying](#deploying)). |
 | `GITHUB_TOKEN` | No | GitHub token used to read project repositories. Without it the server can make 60 GitHub requests an hour; with it, 5,000. It needs no scopes. |
@@ -94,7 +98,29 @@ All variables live in the root `.env.local` and are read only by the server (`se
 
 ### Email
 
-Without a real `RESEND_API_KEY` (or with `EMAIL_TRANSPORT=log`), every email the app would send (verification links, password resets, invites, reminders, team updates) is printed in the terminal running `npm run dev`, between `[mail]` and `[/mail]`. Copy links from there while developing. To really send email, create a Resend account, verify a domain you own, set `RESEND_API_KEY` and `EMAIL_FROM`, and remove `EMAIL_TRANSPORT`. Demo accounts never send email.
+Without an email API key (or with `EMAIL_TRANSPORT=log`), every email the app would send (verification links, password resets, invites, reminders, team updates) is printed in the terminal running `npm run dev`, between `[mail]` and `[/mail]`. Copy links from there while developing. Demo accounts never send email.
+
+When the server starts it says which service it uses, for example `Emails are sent through Brevo from HackTrack <you@gmail.com>.`
+
+**Brevo (free, no domain needed).** The free plan sends about 300 emails a day.
+
+1. Create a free account at [brevo.com](https://www.brevo.com).
+2. Under **Senders, Domains & Dedicated IPs → Senders**, add the address emails should come from (your Gmail works) and click the confirmation link Brevo emails you.
+3. Under **SMTP & API → API Keys**, create an API key.
+4. In `.env.local`, set:
+
+   ```
+   BREVO_API_KEY=xkeysib-...
+   EMAIL_FROM=HackTrack <the-address-you-verified@gmail.com>
+   ```
+
+   and remove `EMAIL_TRANSPORT=log` if it is there. Restart `npm run dev`.
+
+Emails sent "from" a Gmail or Outlook address through Brevo can land in spam at first, because those providers have not authorised Brevo to send for them. Ask teammates to mark the first one as **Not spam**. For the best delivery, use an address on a domain you own and authenticate that domain in Brevo.
+
+**Resend (needs a domain).** Create a Resend account, verify a domain you own, set `RESEND_API_KEY` and `EMAIL_FROM` (an address on that domain), and remove `EMAIL_TRANSPORT`.
+
+Each recipient gets their own copy, so team emails never show teammates each other's addresses.
 
 ## Google sign-in
 
@@ -197,13 +223,13 @@ npm run build
 npm start
 ```
 
-Express serves both the API and the built React app from one port, so the app deploys as a single Node service (for example on Render or Railway).
+Express serves both the API and the built React app from one port, so the app deploys as a single Node service (for example on Render or Railway). Built files in `/assets` are cached for a year (their names change with every build); the page, `sw.js` and the manifest are revalidated on every load, so a deploy reaches installed apps straight away.
 
 - Set `NODE_ENV=production` (the `start` script does this), `MONGODB_URI`, `SESSION_SECRET` and `APP_URL` on the host.
 - Serve it over **HTTPS**. In production the session cookie is marked `Secure`, so sign-in will not stick over plain HTTP.
 - With Atlas, allow the host's outgoing IP addresses under **Network Access** (or `0.0.0.0/0` if the host has no fixed IP).
 - Register `<APP_URL>/api/auth/google/callback` with Google if you use Google sign-in.
-- Set `RESEND_API_KEY` and `EMAIL_FROM` so verification, reset, invite and reminder emails are delivered.
+- Set `BREVO_API_KEY` (or `RESEND_API_KEY`) and `EMAIL_FROM` so verification, reset, invite and reminder emails are delivered.
 - Reminder emails are checked every 15 minutes while the server is running. If your host puts the server to sleep, also set `CRON_SECRET` and have a scheduled job (for example the host's cron feature or GitHub Actions) call this every 15 minutes:
 
   ```bash
@@ -211,6 +237,82 @@ Express serves both the API and the built React app from one port, so the app de
   ```
 
   Each reminder is claimed in the database before it is sent, so running both never sends one twice.
+
+## Install as an app
+
+HackTrack is a Progressive Web App: no app store, nothing to pay, and it works on Android, iPhone, iPad, Windows, macOS, Linux and ChromeOS. Once it is deployed over HTTPS:
+
+- **Android, or Chrome and Edge on a computer:** click **Install app** in the header (or the install icon in the address bar) and confirm.
+- **iPhone and iPad:** open the site in Safari, tap **Install app** in the header for the steps, or tap **Share → Add to Home Screen** directly.
+
+The installed app opens full screen from its own icon, and a long press on the icon offers shortcuts to My tasks, Projects and Friends.
+
+How it behaves:
+
+- **Updates:** each deploy is picked up when the app is opened or comes back to the foreground. A small notice says a new version is ready; **Reload now** switches to it. Nothing changes in the middle of someone's work.
+- **Offline:** the app itself is saved on the device, so it opens without a connection and shows a "Can't reach HackTrack" screen that retries by itself when the connection is back.
+- **Privacy:** account data (hackathons, tasks, projects, profiles) is never stored by the app's offline cache; it always comes from the server.
+
+The offline part (`client/public/sw.js`) only runs in a production build. To try it locally, run `npm run build` and then `npm start`, and open `http://localhost:4000` (browsers allow it on `localhost` without HTTPS). After changing `sw.js`, raise `VERSION` at its top so old caches are cleared.
+
+## Android app
+
+The `mobile/` folder builds HackTrack as an Android app with [Capacitor](https://capacitorjs.com). The app is a native shell that opens your deployed HackTrack site, so sign-in, data and every new deploy work exactly as on the web without publishing a new app version.
+
+What the app adds on top of the website:
+
+- Its own launcher icon (including Android's adaptive and round shapes) and a splash screen.
+- The Android back button closes an open dialog, goes back a page, or leaves the app from the first page.
+- Links to other sites open in the phone's browser; calendar exports open Android's share sheet (Google Calendar, Drive, …).
+- The status bar follows the light or dark theme.
+- A built-in "Can't reach HackTrack" screen when there is no connection, which reconnects by itself.
+- **Google sign-in:** Google blocks its sign-in page inside apps, so the app opens it in the phone's browser. When it finishes, the browser hands a one-time code back to the app (`com.hacktrack.app://auth`). The code only works together with a secret the app kept (PKCE), expires after 2 minutes and works once. Connecting Google to an existing account is done on the website.
+
+### Build it
+
+You need JDK 21 and the Android SDK (installing [Android Studio](https://developer.android.com/studio) gives you both), and `ANDROID_HOME` pointing at the SDK.
+
+```bash
+HACKTRACK_URL=https://your-hacktrack-site.example.com npm run android:build
+```
+
+The APK is written to `mobile/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install` on a phone connected by USB, or send the file to a phone and open it (allow installing from that app when Android asks).
+
+`HACKTRACK_URL` is the deployed site the app opens; it is baked in when you build, so rebuild if it changes. Use your HTTPS address for real use. Other commands: `npm run android:sync` (apply changes to the Android project) and `npm run android:open` (open it in Android Studio to run it on an emulator or phone).
+
+### Try it before deploying
+
+- **Android emulator:** run `npm run dev`, then build without `HACKTRACK_URL`. The app opens `http://10.0.2.2:5173`, which is the emulator's way of reaching your computer.
+- **Phone on the same Wi-Fi:** run `npm run dev:phone` (the normal dev servers, reachable from other devices), find your computer's Wi-Fi address (`ip -4 addr` on Linux, `ipconfig` on Windows), then build with `HACKTRACK_URL=http://<that address>:5173 npm run android:build`. Keep `npm run dev:phone` running while you use the app, and keep the phone on the same Wi-Fi. If the phone still can't connect, open `http://<that address>:5173` in the phone's browser: if that fails too, your computer's firewall is blocking port 5173. Plain `http` is allowed only for this kind of testing; always use `https` for real use, and Google sign-in only works on the deployed site.
+
+A build without `HACKTRACK_URL` only works in the emulator; on a real phone it shows "Can't reach HackTrack". The build prints a warning when that happens, and the app's offline screen shows the address it tried.
+
+### Publish on Google Play
+
+1. Create an upload key once and keep it safe (losing it means you cannot update the app):
+
+   ```bash
+   keytool -genkey -v -keystore mobile/android/hacktrack-upload.jks -alias hacktrack -keyalg RSA -keysize 2048 -validity 10000
+   ```
+
+2. Create `mobile/android/keystore.properties` (git-ignored, like the key itself):
+
+   ```
+   storeFile=hacktrack-upload.jks
+   storePassword=...
+   keyAlias=hacktrack
+   keyPassword=...
+   ```
+
+3. Raise `versionCode` (and `versionName`) in `mobile/android/app/build.gradle` for every upload, then run:
+
+   ```bash
+   HACKTRACK_URL=https://your-hacktrack-site.example.com npm run build:release -w mobile
+   ```
+
+4. Upload `mobile/android/app/build/outputs/bundle/release/app-release.aab` in the [Google Play Console](https://play.google.com/console) (a one-time $25 developer account). A signed APK for sharing directly is in `outputs/apk/release/`.
+
+To change the icon or splash screen, edit the SVGs in `mobile/assets/` and run `sh mobile/assets/generate.sh` (needs ImageMagick).
 
 ## Project structure
 
@@ -232,6 +334,17 @@ client/
     lib/project.ts          Board columns, project statuses and date helpers
     lib/api.ts              Every request the client makes to the server
     lib/types.ts            Hackathon types shared with the server
+    lib/pwa.ts              Service worker registration, install prompt and update notice
+    lib/native.ts           Android app only: back button, links, calendar sharing, status bar, Google sign-in
+  public/
+    manifest.webmanifest    App name, icons, colours and shortcuts for installing
+    sw.js                   Service worker: offline app shell and updates (production builds only)
+    icons/                  App icons (any and maskable) and the iPhone home screen icon
+mobile/
+  capacitor.config.ts       App id, name, the site it opens (HACKTRACK_URL) and splash settings
+  scripts/prepare.mjs       Writes the built-in offline page with the site address
+  assets/                   Icon and splash sources, and generate.sh to render them
+  android/                  The Android Studio project (Capacitor), including signing for Play
 server/
   src/
     index.ts                Express app, error handling, serves client/dist in production
@@ -241,7 +354,7 @@ server/
     session.ts              Signed session cookies
     auth-middleware.ts      Rejects requests without a valid session
     sample-data.ts          Sample hackathons for new accounts and demos, and the demo project
-    mailer.ts, emails.ts    Sending email (Resend or the log) and every email's wording
+    mailer.ts, emails.ts    Sending email (Brevo, Resend or the log) and every email's wording
     tokens.ts               Single-use links for email confirmation and password reset
     reminders.ts            Finds and sends due reminder emails
     calendar.ts             Builds .ics calendar files
@@ -275,9 +388,10 @@ All endpoints are under `/api`, take and return JSON, and report problems as `{ 
 | `POST` | `/api/auth/password` | Change your password (`currentPassword`, `newPassword`). Signs out your other devices. |
 | `POST` | `/api/auth/logout-all` | Sign out of every device. |
 | `POST` | `/api/auth/demo` | Start a demo session in a new throwaway account. |
-| `GET` | `/api/auth/google` | Start Google sign-in (browser redirect). With `?link=1`, connect Google to the signed-in account instead. |
+| `GET` | `/api/auth/google` | Start Google sign-in (browser redirect). With `?link=1`, connect Google to the signed-in account instead; with `?app=<PKCE challenge>`, sign in to the Android app. |
 | `DELETE` | `/api/auth/google` | Disconnect Google from your account (only if it also has a password). |
 | `GET` | `/api/auth/google/callback` | Where Google returns after sign-in. |
+| `POST` | `/api/auth/app-login` | Android app: finish a Google sign-in with the one-time `token` from the browser and the app's `verifier`. |
 | `GET` | `/api/hackathons` | List your hackathons, newest first. |
 | `POST` | `/api/hackathons` | Create a hackathon. |
 | `POST` | `/api/hackathons/import` | Create up to 100 hackathons at once (`{ "hackathons": [...] }`). |
@@ -357,7 +471,7 @@ A hackathon you are not on the team of, or a project you are not on, always retu
 | "Google sign-in is not set up yet" | Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, see [Google sign-in](#google-sign-in). |
 | Google shows `redirect_uri_mismatch` | The redirect URI registered with Google must exactly match `<APP_URL>/api/auth/google/callback`. |
 | Signed in but immediately signed out again in production | The site is served over plain HTTP. Use HTTPS. |
-| Emails do not arrive | Check the server terminal: with `EMAIL_TRANSPORT=log` or no Resend key they are printed there. With Resend, look for a "was not sent" line; the sender must be on a verified domain, and `onboarding@resend.dev` only delivers to your own Resend account address. |
+| Emails do not arrive | Check the server terminal: with `EMAIL_TRANSPORT=log` or no API key they are printed there. Otherwise look for a "was not sent" line with the service's answer. With Brevo, `EMAIL_FROM` must be a verified sender and the API key must be active; also check the recipient's spam folder. With Resend, the sender must be on a verified domain, and `onboarding@resend.dev` only delivers to your own Resend account address. |
 | Reminder emails never arrive | They go only to team members with accounts, only while the hackathon is not submitted, and only once the deadline is within a chosen number of days. If the host sleeps, set up the cron call described under [Deploying](#deploying). |
 
 ## Known limitations

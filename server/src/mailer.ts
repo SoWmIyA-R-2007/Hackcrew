@@ -38,7 +38,43 @@ function toHtml(mail: Mail) {
   return `<div style="font-family:system-ui,sans-serif;color:#18213a;max-width:560px">${paragraphs}${button}<p style="color:#7c8598;font-size:13px">HackTrack</p></div>`;
 }
 
-/** Sends an email. Never throws: failures are logged and reported as false so callers can carry on */
+/** "HackTrack <team@example.com>" as a name and an address */
+export function parseSender(from: string) {
+  const match = /^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$/.exec(from);
+  return match
+    ? { name: match[1].replace(/^"|"$/g, '') || 'HackTrack', email: match[2] }
+    : { name: 'HackTrack', email: from.trim() };
+}
+
+/** Sends one copy to one recipient through the configured service; returns an error message or null */
+async function deliver(to: string, mail: Mail): Promise<string | null> {
+  const text = toText(mail);
+  const html = toHtml(mail);
+  const res =
+    env.emailTransport === 'brevo'
+      ? await fetch(`${env.brevoApiUrl}/smtp/email`, {
+          method: 'POST',
+          headers: { 'api-key': env.brevoApiKey!, 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            sender: parseSender(env.emailFrom),
+            to: [{ email: to }],
+            subject: mail.subject,
+            textContent: text,
+            htmlContent: html,
+          }),
+        })
+      : await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${env.resendApiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: env.emailFrom, to: [to], subject: mail.subject, text, html }),
+        });
+  return res.ok ? null : `${env.emailTransport === 'brevo' ? 'Brevo' : 'Resend'} answered ${res.status} ${await res.text()}`;
+}
+
+/**
+ * Sends an email. Each recipient gets their own copy, so nobody sees the others' addresses. Never throws:
+ * failures are logged and reported as false so callers can carry on. True if at least one copy was sent
+ */
 export async function sendMail(mail: Mail): Promise<boolean> {
   const to = [...new Set(mail.to.filter(isDeliverable))];
   if (to.length === 0) return false;
@@ -48,19 +84,12 @@ export async function sendMail(mail: Mail): Promise<boolean> {
     return true;
   }
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${env.resendApiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: env.emailFrom, to, subject: mail.subject, text: toText(mail), html: toHtml(mail) }),
-    });
-    if (!res.ok) {
-      console.error(`Email "${mail.subject}" was not sent: Resend answered ${res.status} ${await res.text()}`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`Email "${mail.subject}" was not sent:`, err instanceof Error ? err.message : err);
-    return false;
-  }
+  const results = await Promise.all(
+    to.map((address) =>
+      deliver(address, mail).catch((err: unknown) => (err instanceof Error ? err.message : String(err)))
+    )
+  );
+  const failed = results.filter((r): r is string => r !== null);
+  if (failed.length > 0) console.error(`Email "${mail.subject}" was not sent to ${failed.length} of ${to.length}: ${failed[0]}`);
+  return failed.length < to.length;
 }

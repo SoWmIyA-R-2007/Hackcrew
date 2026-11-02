@@ -5,6 +5,7 @@ import { api, type CurrentUser } from '@/lib/api';
 import { AppNotification } from '@/lib/types';
 import { getInitials } from '@/lib/utils';
 import { NotificationDrawer } from './NotificationDrawer';
+import { InstallButton } from './InstallApp';
 
 interface NavbarProps {
   onAddHackathon?: () => void;
@@ -155,6 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAddHackathon, searchQuery, onS
           {onSearchChange && <div className="flex-1 hidden lg:block" />}
 
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <InstallButton />
             <button
               onClick={() => {
                 setDrawerOpen(true);

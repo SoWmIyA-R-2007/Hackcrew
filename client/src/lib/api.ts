@@ -159,6 +159,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ token, newPassword }),
     }).then((r) => r.user),
+  // Android app: finishes a Google sign-in from the one-time code and the secret the app kept
+  appLogin: (token: string, verifier: string) =>
+    request<{ user: CurrentUser }>('/api/auth/app-login', { method: 'POST', body: JSON.stringify({ token, verifier }) }).then(
+      (r) => r.user
+    ),
   demo: () => request<{ user: CurrentUser }>('/api/auth/demo', { method: 'POST' }).then((r) => r.user),
 
   listHackathons: () =>

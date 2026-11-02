@@ -4,14 +4,53 @@
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173
     },
     {
       "name": "dev-test-db",
       "runtimeExecutable": "env",
-      "runtimeArgs": ["MONGODB_URI=mongodb://127.0.0.1:27018", "MONGODB_DB=hacktrack_test", "API_PORT=4010", "APP_URL=http://localhost:5180", "EMAIL_TRANSPORT=log", "REMINDER_INTERVAL_MINUTES=0", "CRON_SECRET=test-cron-secret", "sh", "-c", "npm run dev -w server & exec npm run dev -w client -- --port 5180 --strictPort"],
+      "runtimeArgs": [
+        "MONGODB_URI=mongodb://127.0.0.1:27018",
+        "MONGODB_DB=hacktrack_test",
+        "API_PORT=4010",
+        "APP_URL=http://localhost:5180",
+        "EMAIL_TRANSPORT=log",
+        "REMINDER_INTERVAL_MINUTES=0",
+        "CRON_SECRET=test-cron-secret",
+        "sh",
+        "-c",
+        "npm run dev -w server & exec npm run dev -w client -- --port 5180 --strictPort"
+      ],
       "port": 5180
+    },
+    {
+      "name": "prod-test",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NODE_ENV=production",
+        "PORT=5190",
+        "MONGODB_URI=mongodb://127.0.0.1:27018",
+        "MONGODB_DB=hacktrack_test",
+        "APP_URL=http://localhost:5190",
+        "EMAIL_TRANSPORT=log",
+        "REMINDER_INTERVAL_MINUTES=0",
+        "node_modules/.bin/tsx",
+        "server/src/index.ts"
+      ],
+      "port": 5190
+    },
+    {
+      "name": "dev-phone",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:phone"
+      ],
+      "port": 5173
     }
   ]
 }

@@ -5,7 +5,12 @@ import { RouterProvider } from 'react-router/dom';
 import { api, ApiError, safeNextPath } from '@/lib/api';
 import { AppLoading } from '@/components/Loading';
 import { RootLayout, RouteError } from '@/components/RootLayout';
+import { initPwa, isNativeApp } from '@/lib/pwa';
 import './index.css';
+
+initPwa();
+// Android app only: back button, links, status bar and Google sign-in (never downloaded on the website)
+if (isNativeApp()) import('@/lib/native').then((m) => m.initNative());
 
 /** Whether the visitor has a session. Only "signed out" counts as no: a server that is down is shown as an error */
 async function isSignedIn() {
