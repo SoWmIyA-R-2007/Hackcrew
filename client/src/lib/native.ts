@@ -53,14 +53,14 @@ async function shareCalendar(href: string) {
   try {
     const res = await fetch(href, { credentials: 'same-origin' });
     if (!res.ok) throw new Error(`Calendar export failed (${res.status})`);
-    const name = /filename="?([^";]+)"?/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? 'hacktrack.ics';
+    const name = /filename="?([^";]+)"?/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? 'hackcrew.ics';
     const file = await Filesystem.writeFile({
       path: name,
       data: await res.text(),
       directory: Directory.Cache,
       encoding: Encoding.UTF8,
     });
-    await Share.share({ title: 'HackTrack deadlines', url: file.uri, dialogTitle: 'Add to your calendar' });
+    await Share.share({ title: 'Hackcrew deadlines', url: file.uri, dialogTitle: 'Add to your calendar' });
   } catch (err) {
     // Closing the share sheet without choosing also lands here; only report real failures
     if (err instanceof Error && !/cancel/i.test(err.message)) alert(`Could not export the calendar. ${err.message}`);

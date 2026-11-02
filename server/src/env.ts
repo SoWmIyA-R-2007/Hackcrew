@@ -37,7 +37,7 @@ export const env = {
   brevoApiKey: process.env.BREVO_API_KEY,
   brevoApiUrl: (process.env.BREVO_API_URL || 'https://api.brevo.com/v3').replace(/\/$/, ''),
   // "Name <address>". With Brevo the address must be a sender verified in your Brevo account
-  emailFrom: process.env.EMAIL_FROM || 'HackTrack <onboarding@resend.dev>',
+  emailFrom: process.env.EMAIL_FROM || 'Hackcrew <onboarding@resend.dev>',
   emailTransport: emailTransport(),
   // Protects POST /api/cron/reminders for hosts that run scheduled jobs
   cronSecret: process.env.CRON_SECRET,

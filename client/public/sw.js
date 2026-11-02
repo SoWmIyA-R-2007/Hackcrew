@@ -1,8 +1,8 @@
 /*
- * HackTrack service worker: makes the app installable and lets it open without a connection.
+ * Hackcrew service worker: makes the app installable and lets it open without a connection.
  *
  * - Pages (navigations): network first, so people always get the latest version; the saved copy of the app
- *   is used only when offline, and the app then shows its "Can't reach HackTrack" screen.
+ *   is used only when offline, and the app then shows its "Can't reach Hackcrew" screen.
  * - /api: never cached. Hackathons, tasks and profiles always come from the server, so nothing private is
  *   kept on the device and nothing goes stale.
  * - Built code in /assets (file names change with every build): cache first.
@@ -12,9 +12,9 @@
  * out from under someone mid-task.
  */
 const VERSION = 'v1';
-const SHELL = `hacktrack-shell-${VERSION}`;
-const STATIC = `hacktrack-static-${VERSION}`;
-const FONTS = `hacktrack-fonts-${VERSION}`;
+const SHELL = `hackcrew-shell-${VERSION}`;
+const STATIC = `hackcrew-static-${VERSION}`;
+const FONTS = `hackcrew-fonts-${VERSION}`;
 const CURRENT = [SHELL, STATIC, FONTS];
 const SHELL_URL = '/index.html';
 const PRECACHE = [SHELL_URL, '/manifest.webmanifest', '/favicon.svg', '/icons/icon-192.png'];
@@ -29,7 +29,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
-      await Promise.all(names.filter((n) => n.startsWith('hacktrack-') && !CURRENT.includes(n)).map((n) => caches.delete(n)));
+      // Also removes the caches saved before the app was renamed from HackTrack
+      await Promise.all(names.filter((n) => /^hack(crew|track)-/.test(n) && !CURRENT.includes(n)).map((n) => caches.delete(n)));
       await trim(STATIC, STATIC_LIMIT);
       // Take control of open pages straight away, so the first install already works offline
       await self.clients.claim();
@@ -77,7 +78,7 @@ async function networkFirstPage(request) {
     return response;
   } catch {
     const cached = await caches.match(SHELL_URL);
-    return cached || new Response('HackTrack is offline and has not been saved on this device yet.', {
+    return cached || new Response('Hackcrew is offline and has not been saved on this device yet.', {
       status: 503,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });

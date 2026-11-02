@@ -15,8 +15,29 @@ import { passwordResetEmail, verificationEmail } from '../emails.js';
 import { consumeAppLogin, consumeToken, issueToken } from '../tokens.js';
 import { escapeHtml } from '../mailer.js';
 import { insertUserWithUsername, isDuplicateUsername, isUsernameTaken, usernameSchema } from '../usernames.js';
+import { check, clear, clientIp, hit, limitByIp, tooMany, type Limit } from '../rate-limit.js';
 
 export const authRouter = Router();
+
+// --- Rate limits ------------------------------------------------------------
+// Counted per network address (IP) and per account. Per-IP limits are generous because everyone at a hackathon
+// venue may share one Wi-Fi address
+
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+// Wrong passwords: from one network for one account, for one account from anywhere, and from one network overall
+const LOGIN_FAILS_ACCOUNT_IP: Limit = { name: 'login-account-ip', max: 10, windowMs: 15 * MINUTE };
+const LOGIN_FAILS_ACCOUNT: Limit = { name: 'login-account', max: 50, windowMs: HOUR };
+const LOGIN_FAILS_IP: Limit = { name: 'login-ip', max: 100, windowMs: 15 * MINUTE };
+const PASSWORD_CHANGE_FAILS: Limit = { name: 'password-change', max: 10, windowMs: 15 * MINUTE };
+const SIGNUPS_IP: Limit = { name: 'signup-ip', max: 30, windowMs: HOUR };
+const RESET_REQUESTS_IP: Limit = { name: 'forgot-ip', max: 20, windowMs: HOUR };
+// Verification and reset emails to one address, so the endpoints can't be used to flood an inbox
+const EMAILS_ADDRESS: Limit = { name: 'email', max: 5, windowMs: HOUR };
+// Emailed links and app sign-in codes, against guessing
+const LINK_TRIES_IP: Limit = { name: 'link-ip', max: 30, windowMs: 15 * MINUTE };
+// Demo accounts, so the button can't be used to fill the database
+const DEMOS_IP: Limit = { name: 'demo-ip', max: 30, windowMs: HOUR };
 
 const signupSchema = z.object({
   name: z.string().trim().min(1, 'Enter your name').max(100),
@@ -36,7 +57,7 @@ const loginSchema = z
   .transform(({ login, email, password }) => ({ login: login || email || '', password }))
   .refine((v) => v.login.length > 0, 'Enter your email or username');
 
-authRouter.post('/signup', async (req, res) => {
+authRouter.post('/signup', limitByIp(SIGNUPS_IP, 'Too many new accounts from this network'), async (req, res) => {
   const parsed = signupSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0].message });
@@ -92,6 +113,18 @@ authRouter.post('/login', async (req, res) => {
   const { users } = await collections();
   // "@name" and "name" are usernames; anything else with an @ is an email address
   const id = login.replace(/^@/, '');
+  const ip = clientIp(req);
+  const accountIp = `${id}|${ip}`;
+
+  // Checked before the password, so a blocked guess learns nothing
+  const blocked = (
+    await Promise.all([check(LOGIN_FAILS_ACCOUNT_IP, accountIp), check(LOGIN_FAILS_ACCOUNT, id), check(LOGIN_FAILS_IP, ip)])
+  ).filter((r) => !r.allowed);
+  if (blocked.length > 0) {
+    tooMany(res, Math.max(...blocked.map((r) => r.retryAfter)), 'Too many failed sign-in attempts');
+    return;
+  }
+
   const user = await users.findOne(id.includes('@') ? { email: id } : { handle: id });
 
   if (user && !user.passwordHash) {
@@ -99,10 +132,12 @@ authRouter.post('/login', async (req, res) => {
     return;
   }
   if (!user || !(await bcrypt.compare(password, user.passwordHash!))) {
+    await Promise.all([hit(LOGIN_FAILS_ACCOUNT_IP, accountIp), hit(LOGIN_FAILS_ACCOUNT, id), hit(LOGIN_FAILS_IP, ip)]);
     res.status(401).json({ error: 'Email, username or password is incorrect.' });
     return;
   }
 
+  await clear(LOGIN_FAILS_ACCOUNT_IP, accountIp);
   await createSession(res, user);
   res.json({ user: toPublicUser(user) });
 });
@@ -111,21 +146,10 @@ authRouter.post('/login', async (req, res) => {
 
 const VERIFY_TTL_MS = 2 * 24 * 60 * 60 * 1000;
 const RESET_TTL_MS = 60 * 60 * 1000;
-// Per-address limit on verification and reset emails, so the endpoints can't be used to flood an inbox
-const EMAIL_LIMIT_PER_HOUR = 5;
-const emailRequests = new Map<string, number[]>();
-
-function allowEmailTo(address: string) {
-  const hourAgo = Date.now() - 60 * 60 * 1000;
-  const recent = (emailRequests.get(address) ?? []).filter((t) => t > hourAgo);
-  if (recent.length >= EMAIL_LIMIT_PER_HOUR) return false;
-  recent.push(Date.now());
-  emailRequests.set(address, recent);
-  return true;
-}
+const allowEmailTo = async (address: string) => (await hit(EMAILS_ADDRESS, address)).allowed;
 
 async function sendVerification(user: UserDoc) {
-  if (user.isDemo || user.emailVerified || !allowEmailTo(user.email)) return false;
+  if (user.isDemo || user.emailVerified || !(await allowEmailTo(user.email))) return false;
   const token = await issueToken(user._id, 'verify_email', VERIFY_TTL_MS);
   return sendMail(verificationEmail(user.email, user.name, token));
 }
@@ -153,7 +177,7 @@ authRouter.post('/resend-verification', requireUser('Not signed in'), async (_re
 });
 
 // Confirm the email address from the link; works whether or not the person is signed in
-authRouter.post('/verify-email', async (req, res) => {
+authRouter.post('/verify-email', limitByIp(LINK_TRIES_IP), async (req, res) => {
   const parsed = tokenSchema.safeParse(req.body);
   const userId = parsed.success ? await consumeToken(parsed.data.token, 'verify_email') : null;
   if (!userId) {
@@ -166,7 +190,7 @@ authRouter.post('/verify-email', async (req, res) => {
 });
 
 // Always answers the same way, so it cannot be used to find out which emails have accounts
-authRouter.post('/forgot-password', async (req, res) => {
+authRouter.post('/forgot-password', limitByIp(RESET_REQUESTS_IP, 'Too many reset requests from this network'), async (req, res) => {
   const parsed = forgotSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0].message });
@@ -174,7 +198,7 @@ authRouter.post('/forgot-password', async (req, res) => {
   }
   const { users } = await collections();
   const user = await users.findOne({ email: parsed.data.email });
-  if (user && !user.isDemo && allowEmailTo(user.email)) {
+  if (user && !user.isDemo && (await allowEmailTo(user.email))) {
     const token = await issueToken(user._id, 'reset_password', RESET_TTL_MS);
     await sendMail(passwordResetEmail(user.email, user.name, token));
   }
@@ -182,7 +206,7 @@ authRouter.post('/forgot-password', async (req, res) => {
 });
 
 // Set a new password from the emailed link. This also proves the email, and signs out every other session
-authRouter.post('/reset-password', async (req, res) => {
+authRouter.post('/reset-password', limitByIp(LINK_TRIES_IP), async (req, res) => {
   const parsed = resetSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0].message });
@@ -214,31 +238,15 @@ authRouter.post('/reset-password', async (req, res) => {
 // --- Demo sign-in ---------------------------------------------------------
 
 const DEMO_HOURS = 24;
-const DEMO_LIMIT_PER_HOUR = 30;
-const demoRequests = new Map<string, number[]>();
-
-/** Simple in-memory limit on demo accounts per IP, so the button can't be used to fill the database */
-function allowDemo(ip: string) {
-  const hourAgo = Date.now() - 60 * 60 * 1000;
-  const recent = (demoRequests.get(ip) ?? []).filter((t) => t > hourAgo);
-  if (recent.length >= DEMO_LIMIT_PER_HOUR) return false;
-  recent.push(Date.now());
-  demoRequests.set(ip, recent);
-  return true;
-}
 
 // Signs the visitor into a private, throwaway account filled with sample hackathons
-authRouter.post('/demo', async (req, res) => {
-  if (!allowDemo(req.ip ?? 'unknown')) {
-    res.status(429).json({ error: 'Too many demo sessions from this network. Try again in an hour.' });
-    return;
-  }
+authRouter.post('/demo', limitByIp(DEMOS_IP, 'Too many demo sessions from this network'), async (req, res) => {
 
   const expiresAt = new Date(Date.now() + DEMO_HOURS * 60 * 60 * 1000);
   const draft: UserDoc = {
     _id: new ObjectId(),
     // Unique placeholder address; demo accounts cannot sign in with a password
-    email: `demo-${randomBytes(6).toString('hex')}@demo.hacktrack.invalid`,
+    email: `demo-${randomBytes(6).toString('hex')}@demo.hackcrew.invalid`,
     name: 'Demo user',
     isDemo: true,
     expiresAt,
@@ -341,7 +349,14 @@ authRouter.post('/password', requireUser('Not signed in'), async (req, res) => {
     res.status(400).json({ error: 'This account signs in with Google, so it has no password to change.' });
     return;
   }
+  const userKey = user._id.toHexString();
+  const attempts = await check(PASSWORD_CHANGE_FAILS, userKey);
+  if (!attempts.allowed) {
+    tooMany(res, attempts.retryAfter, 'Too many wrong passwords');
+    return;
+  }
   if (!(await bcrypt.compare(parsed.data.currentPassword, user.passwordHash))) {
+    await hit(PASSWORD_CHANGE_FAILS, userKey);
     res.status(400).json({ error: 'Your current password is incorrect.' });
     return;
   }
@@ -441,7 +456,7 @@ authRouter.delete('/google', requireUser('Not signed in'), async (_req, res) => 
 // Finishes a Google sign-in started in the Android app: the one-time code from the browser plus the secret the
 // app kept. Starts the app's session
 const appLoginSchema = z.object({ token: z.string().min(20).max(200), verifier: z.string().min(43).max(128) });
-authRouter.post('/app-login', async (req, res) => {
+authRouter.post('/app-login', limitByIp(LINK_TRIES_IP), async (req, res) => {
   const parsed = appLoginSchema.safeParse(req.body);
   const userId = parsed.success ? await consumeAppLogin(parsed.data.token, parsed.data.verifier) : null;
   const { users } = await collections();
@@ -476,10 +491,10 @@ function returnToApp(res: Response, params: Record<string, string>) {
     .type('html')
     .send(
       `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
-        `<meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Back to HackTrack</title></head>` +
+        `<meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"><title>Back to Hackcrew</title></head>` +
         `<body style="font-family:system-ui,sans-serif;background:#f5f6f3;color:#18213a;display:grid;place-items:center;min-height:100vh;margin:0">` +
         `<div style="text-align:center;padding:24px"><p style="font-size:18px;font-weight:600">${params.token ? 'Signed in' : 'Sign-in did not finish'}</p>` +
-        `<a href="${escapeHtml(target)}" style="display:inline-block;margin-top:12px;background:#2b44c9;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600">Open HackTrack</a>` +
+        `<a href="${escapeHtml(target)}" style="display:inline-block;margin-top:12px;background:#2b44c9;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600">Open Hackcrew</a>` +
         `</div></body></html>`
     );
 }

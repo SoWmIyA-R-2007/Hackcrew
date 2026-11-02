@@ -5,7 +5,7 @@ import type { UserDoc } from './models.js';
 
 // Names that would clash with app pages and API routes, or invite impersonation
 const RESERVED = new Set([
-  'admin', 'administrator', 'api', 'app', 'auth', 'dashboard', 'demo', 'help', 'hacktrack', 'invite', 'login',
+  'admin', 'administrator', 'api', 'app', 'auth', 'dashboard', 'demo', 'hackcrew', 'hacktrack', 'help', 'invite', 'login',
   'logout', 'me', 'moderator', 'null', 'profile', 'root', 'settings', 'signup', 'stats', 'support', 'system',
   'tasks', 'u', 'undefined', 'verify-email', 'www',
 ]);

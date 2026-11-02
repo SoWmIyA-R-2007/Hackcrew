@@ -47,7 +47,7 @@ export function buildCalendar(name: string, hackathons: HackathonDoc[]) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//HackTrack//Deadlines//EN',
+    'PRODID:-//Hackcrew//Deadlines//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeText(name)}`,

@@ -27,7 +27,7 @@ async function call<T>(path: string): Promise<T> {
     res = await fetch(`${env.githubApiUrl}${path}`, {
       headers: {
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'HackTrack',
+        'User-Agent': 'Hackcrew',
         'X-GitHub-Api-Version': '2022-11-28',
         ...(env.githubToken ? { Authorization: `Bearer ${env.githubToken}` } : {}),
       },
@@ -36,7 +36,7 @@ async function call<T>(path: string): Promise<T> {
   } catch {
     throw new GitHubError('GitHub could not be reached. Try again in a minute.');
   }
-  if (res.status === 404) throw new GitHubError('Repository not found. HackTrack can only read public repositories.');
+  if (res.status === 404) throw new GitHubError('Repository not found. Hackcrew can only read public repositories.');
   if (res.status === 403 || res.status === 429) {
     throw new GitHubError('GitHub is limiting requests right now. Try again later (the server owner can set GITHUB_TOKEN to raise the limit).');
   }

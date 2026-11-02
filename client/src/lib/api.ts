@@ -74,7 +74,7 @@ async function request<T>(url: string, init?: RequestInit & { background?: boole
     throw new ApiError(
       navigator.onLine === false
         ? 'You are offline. Check your internet connection and try again.'
-        : 'HackTrack could not be reached. Check your connection and try again.',
+        : 'Hackcrew could not be reached. Check your connection and try again.',
       NETWORK_ERROR
     );
   } finally {

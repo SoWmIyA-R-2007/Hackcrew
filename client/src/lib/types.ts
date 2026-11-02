@@ -241,7 +241,7 @@ export interface GitHubPull {
   url: string;
 }
 
-/** What HackTrack last read from the project's public GitHub repository */
+/** What Hackcrew last read from the project's public GitHub repository */
 export interface ProjectGitHub {
   // "owner/name", taken from the project's code repository link
   repo: string;

@@ -23,7 +23,7 @@ export const Wordmark: React.FC<{ className?: string; compact?: boolean }> = ({ 
       <rect x="2" y="13" width="9" height="4" rx="2" className="fill-ink-3" />
     </svg>
     <span className={`font-display font-semibold text-lg tracking-tight text-ink ${compact ? 'sr-only sm:not-sr-only' : ''}`}>
-      HackTrack
+      Hackcrew
     </span>
   </span>
 );

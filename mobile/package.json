@@ -1,8 +1,8 @@
 {
-  "name": "@hacktrack/mobile",
+  "name": "@hackcrew/mobile",
   "version": "0.2.0",
   "private": true,
-  "description": "HackTrack for Android: a Capacitor shell that opens the deployed HackTrack site",
+  "description": "Hackcrew for Android: a Capacitor shell that opens the deployed Hackcrew site",
   "type": "module",
   "scripts": {
     "prepare-web": "node scripts/prepare.mjs",

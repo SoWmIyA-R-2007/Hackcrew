@@ -33,12 +33,12 @@ export default function PublicProfilePage() {
       .publicProfile(handle)
       .then((p) => {
         setProfile(p);
-        document.title = `${p.name} on HackTrack`;
+        document.title = `${p.name} on Hackcrew`;
       })
       // A private or unknown profile is a 404; anything else is a failure worth retrying
       .catch((err) => (err instanceof ApiError && err.status === 404 ? setMissing(true) : setLoadError(err)));
     return () => {
-      document.title = 'HackTrack';
+      document.title = 'Hackcrew';
     };
   }, [handle, reloadKey]);
 
@@ -74,7 +74,7 @@ export default function PublicProfilePage() {
         <ErrorScreen
           variant="inline"
           error={loadError}
-          home={{ to: '/', label: 'Go to HackTrack' }}
+          home={{ to: '/', label: 'Go to Hackcrew' }}
           onRetry={() => {
             setLoadError(null);
             setReloadKey((k) => k + 1);
@@ -111,7 +111,7 @@ export default function PublicProfilePage() {
           <div className="min-w-0">
             <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">{profile.name}</h1>
             <p className="text-ink-3">
-              @{profile.handle}, on HackTrack since{' '}
+              @{profile.handle}, on Hackcrew since{' '}
               {new Date(profile.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
           </div>

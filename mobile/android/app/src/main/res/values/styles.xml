@@ -16,7 +16,7 @@
     </style>
 
 
-    <!-- Launch screen: the bars on HackTrack's dark ink (Android 12+ draws the icon itself; older versions use splash.png) -->
+    <!-- Launch screen: the bars on Hackcrew's dark ink (Android 12+ draws the icon itself; older versions use splash.png) -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
         <item name="windowSplashScreenBackground">#18213A</item>

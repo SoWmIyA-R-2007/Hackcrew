@@ -29,7 +29,7 @@ export const AppLoading: React.FC = () => {
             <rect x="5" y="7" width="15" height="4" rx="2" className="fill-ink animate-bar-load [animation-delay:0.15s]" />
             <rect x="2" y="13" width="9" height="4" rx="2" className="fill-ink-3 animate-bar-load [animation-delay:0.3s]" />
           </svg>
-          <p className="text-sm text-ink-2">Loading HackTrack…</p>
+          <p className="text-sm text-ink-2">Loading Hackcrew…</p>
         </>
       )}
       {!shown && <span className="sr-only">Loading</span>}

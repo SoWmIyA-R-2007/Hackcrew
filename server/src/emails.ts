@@ -14,11 +14,11 @@ const hackathonUrl = (h: Pick<HackathonDoc, '_id'>) => `${env.appUrl}/dashboard/
 export function verificationEmail(to: string, name: string, token: string): Mail {
   return {
     to: [to],
-    subject: 'Confirm your email for HackTrack',
+    subject: 'Confirm your email for Hackcrew',
     paragraphs: [
       `Hi ${name},`,
       'Confirm this is your email address so you can reset your password if you ever forget it. The link works for 2 days.',
-      "If you didn't create a HackTrack account, you can ignore this email.",
+      "If you didn't create a Hackcrew account, you can ignore this email.",
     ],
     button: { label: 'Confirm my email', url: `${env.appUrl}/verify-email?token=${encodeURIComponent(token)}` },
   };
@@ -27,10 +27,10 @@ export function verificationEmail(to: string, name: string, token: string): Mail
 export function passwordResetEmail(to: string, name: string, token: string): Mail {
   return {
     to: [to],
-    subject: 'Reset your HackTrack password',
+    subject: 'Reset your Hackcrew password',
     paragraphs: [
       `Hi ${name},`,
-      'Someone asked to reset the password for this HackTrack account. The link works for 1 hour and can be used once.',
+      'Someone asked to reset the password for this Hackcrew account. The link works for 1 hour and can be used once.',
       "If it wasn't you, ignore this email and your password stays the same.",
     ],
     button: { label: 'Choose a new password', url: `${env.appUrl}/reset-password?token=${encodeURIComponent(token)}` },
@@ -40,9 +40,9 @@ export function passwordResetEmail(to: string, name: string, token: string): Mai
 export function inviteEmail(to: string, inviterName: string, h: HackathonDoc, token: string): Mail {
   return {
     to: [to],
-    subject: `${inviterName} invited you to ${h.title} on HackTrack`,
+    subject: `${inviterName} invited you to ${h.title} on Hackcrew`,
     paragraphs: [
-      `${inviterName} added you to team ${h.teamName} for ${h.title} and invited you to track it together on HackTrack.`,
+      `${inviterName} added you to team ${h.teamName} for ${h.title} and invited you to track it together on Hackcrew.`,
       `Submission deadline: ${when(h.submissionDeadline)}.`,
       'Accept the invite to see the problem statement, tasks and deadlines, and to get reminders. The link works for 14 days.',
     ],

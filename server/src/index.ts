@@ -15,6 +15,7 @@ import { friendsRouter } from './routes/friends.js';
 import { projectsRouter } from './routes/projects.js';
 import { startReminderTimer } from './reminders.js';
 import { backfillUsernames } from './usernames.js';
+import { apiRateLimit } from './rate-limit.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -23,6 +24,8 @@ if (env.isProduction) app.set('trust proxy', 1);
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
+// An overall cap on API requests; sign-in, sign-up and emails have stricter limits of their own
+app.use('/api', apiRateLimit);
 app.use('/api/auth', authRouter);
 app.use('/api/hackathons', hackathonsRouter);
 app.use('/api/invites', invitesRouter);
@@ -88,7 +91,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(env.port, () => {
-  console.log(`HackTrack API listening on http://localhost:${env.port}`);
+  console.log(`Hackcrew API listening on http://localhost:${env.port}`);
   // Check the database up front so a missing MongoDB is obvious before anyone tries to sign in
   getDb()
     .then(() => {

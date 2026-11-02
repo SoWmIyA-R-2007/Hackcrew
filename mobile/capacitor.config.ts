@@ -5,7 +5,7 @@ import { serverUrl } from './server-url.mjs';
 // and a new deploy reaches the app without publishing a new version. www/ only holds the offline page.
 const config: CapacitorConfig = {
   appId: 'com.hacktrack.app',
-  appName: 'HackTrack',
+  appName: 'Hackcrew',
   webDir: 'www',
   server: {
     url: serverUrl,

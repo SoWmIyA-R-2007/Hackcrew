@@ -173,7 +173,7 @@ const entry = (actor: Actor, text: string): ProjectActivity => ({
   text,
 });
 
-/** A history line written by HackTrack on GitHub's behalf, e.g. when a linked pull request is merged */
+/** A history line written by Hackcrew on GitHub's behalf, e.g. when a linked pull request is merged */
 const githubEntry = (text: string): ProjectActivity => ({
   id: new ObjectId().toHexString(),
   at: new Date().toISOString(),

@@ -31,15 +31,15 @@ const SITE = JSON.stringify(serverUrl);
 writeFileSync(
   `${www}offline.html`,
   page(
-    "Can't reach HackTrack",
+    "Can't reach Hackcrew",
     `<svg width="64" height="52" viewBox="0 0 22 18" aria-hidden="true"><rect x="0" y="1" width="12" height="4" rx="2" fill="#8295ff"/><rect x="5" y="7" width="15" height="4" rx="2" fill="currentColor"/><rect x="2" y="13" width="9" height="4" rx="2" fill="#7c8598"/></svg>
-  <h1>Can't reach HackTrack</h1>
-  <p>Check your internet connection. HackTrack opens by itself as soon as you are back online.</p>
+  <h1>Can't reach Hackcrew</h1>
+  <p>Check your internet connection. Hackcrew opens by itself as soon as you are back online.</p>
   <p style="margin-top:12px;font-size:13px">This app opens <b id="site"></b>.${
     emulatorOnly
-      ? ' That address only works in the Android emulator: rebuild the app with HACKTRACK_URL set to your site.'
+      ? ' That address only works in the Android emulator: rebuild the app with HACKCREW_URL set to your site.'
       : serverUrl.startsWith('http://')
-        ? ' Make sure this phone is on the same Wi-Fi as that computer and the HackTrack dev server is running.'
+        ? ' Make sure this phone is on the same Wi-Fi as that computer and the Hackcrew dev server is running.'
         : ''
   }</p>
   <button type="button" id="retry">Try again</button>
@@ -58,18 +58,18 @@ writeFileSync(
   )
 );
 // Only used if the app ever starts without a site address
-writeFileSync(`${www}index.html`, page('HackTrack', `<p>Opening HackTrack…</p><script>location.replace(${SITE});</script>`));
-console.log(`HackTrack app will open ${serverUrl}`);
+writeFileSync(`${www}index.html`, page('Hackcrew', `<p>Opening Hackcrew…</p><script>location.replace(${SITE});</script>`));
+console.log(`Hackcrew app will open ${serverUrl}`);
 if (emulatorOnly) {
   console.warn(
     [
       '',
-      '  ⚠  No HACKTRACK_URL set: this build only works in the Android EMULATOR (10.0.2.2 is the emulator\'s',
-      '     name for your computer). On a real phone it will show "Can\'t reach HackTrack".',
+      '  ⚠  No HACKCREW_URL set: this build only works in the Android EMULATOR (10.0.2.2 is the emulator\'s',
+      '     name for your computer). On a real phone it will show "Can\'t reach Hackcrew".',
       '     For a phone, build with your site, for example:',
-      '       HACKTRACK_URL=https://your-site.example.com npm run android:build',
+      '       HACKCREW_URL=https://your-site.example.com npm run android:build',
       '     or, to test against this computer over Wi-Fi (see "Try it before deploying" in the README):',
-      '       HACKTRACK_URL=http://<this computer\'s Wi-Fi IP>:5173 npm run android:build',
+      '       HACKCREW_URL=http://<this computer\'s Wi-Fi IP>:5173 npm run android:build',
       '',
     ].join('\n')
   );

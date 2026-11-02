@@ -17,7 +17,7 @@ const errorMessage = (err: unknown) => (err instanceof Error ? err.message : 'Pl
 const GOOGLE_LINK_ERRORS: Record<string, string> = {
   google_not_configured:
     'Google sign-in is not set up on this server yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to the server environment.',
-  google_in_use: 'That Google account is already connected to a different HackTrack account.',
+  google_in_use: 'That Google account is already connected to a different Hackcrew account.',
   google_already_connected: 'This account is already connected to another Google account. Disconnect it first.',
   google_unverified: 'That Google account has no verified email address, so it cannot be connected.',
   google_failed: 'Connecting Google did not complete. Try again.',
@@ -142,7 +142,7 @@ export default function ProfilePage() {
   };
 
   const handleSignOutEverywhere = async () => {
-    if (!confirm('Sign out of HackTrack on every device, including this one?')) return;
+    if (!confirm('Sign out of Hackcrew on every device, including this one?')) return;
     try {
       await api.logoutAll();
       navigate('/login');
@@ -340,7 +340,7 @@ export default function ProfilePage() {
                   ) : isNativeApp() ? (
                     // Linking needs the website's session in the browser, which the app does not share
                     <span className="text-xs text-ink-3 text-right max-w-[12rem]">
-                      Connect Google from the HackTrack website, then use it in the app.
+                      Connect Google from the Hackcrew website, then use it in the app.
                     </span>
                   ) : (
                     // A full-page navigation: the server sends the browser to Google and back to this page

@@ -1,6 +1,7 @@
 import { MongoClient, MongoNetworkError, MongoServerSelectionError, Db } from 'mongodb';
 import type { FriendshipDoc, HackathonDoc, InviteDoc, ProjectDoc, UserDoc } from './models.js';
 import type { TokenDoc } from './tokens.js';
+import type { RateLimitDoc } from './rate-limit.js';
 import { env } from './env.js';
 
 // One client for the whole process
@@ -46,6 +47,8 @@ async function ensureIndexes(db: Db) {
     db.collection<UserDoc>('users').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     db.collection<HackathonDoc>('hackathons').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     db.collection<ProjectDoc>('projects').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    // Rate limit counters are removed once their window has ended
+    db.collection<RateLimitDoc>('rate_limits').createIndex({ resetAt: 1 }, { expireAfterSeconds: 0 }),
   ]);
 }
 
@@ -78,5 +81,6 @@ export async function collections() {
     invites: db.collection<InviteDoc>('invites'),
     friendships: db.collection<FriendshipDoc>('friendships'),
     projects: db.collection<ProjectDoc>('projects'),
+    rateLimits: db.collection<RateLimitDoc>('rate_limits'),
   };
 }

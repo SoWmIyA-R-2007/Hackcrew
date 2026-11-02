@@ -88,7 +88,7 @@ export const ProfileShowcase: React.FC<Props> = ({ onToast }) => {
     if (!publicUrl) return;
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${profile?.name} on HackTrack`, url: publicUrl });
+        await navigator.share({ title: `${profile?.name} on Hackcrew`, url: publicUrl });
         return;
       } catch {
         // Cancelled or unsupported: fall back to copying the link

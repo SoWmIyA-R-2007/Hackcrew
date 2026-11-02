@@ -47,7 +47,7 @@ export default function InvitePage() {
           {error}
         </p>
         <Link to="/dashboard" className="btn btn-secondary mt-6">
-          Go to HackTrack
+          Go to Hackcrew
         </Link>
       </AuthShell>
     );

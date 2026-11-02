@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "HackTrack",
-  "short_name": "HackTrack",
+  "name": "Hackcrew",
+  "short_name": "Hackcrew",
   "description": "Every hackathon you have signed up for, with deadlines, tasks, teammates and projects in one place.",
   "start_url": "/dashboard?source=app",
   "scope": "/",

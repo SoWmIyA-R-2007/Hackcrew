@@ -104,7 +104,7 @@ export const TeamPanel: React.FC<Props> = ({
                   Invited
                 </span>
               ) : op.userId ? (
-                <span className="text-xs px-2 py-0.5 rounded-md bg-ok-soft text-ok shrink-0" title="Has a HackTrack account on this team">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-ok-soft text-ok shrink-0" title="Has a Hackcrew account on this team">
                   Joined
                 </span>
               ) : null}

@@ -67,6 +67,8 @@ export const ErrorScreen: React.FC<Props> = ({
   const here = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
   const canGoBack = typeof window !== 'undefined' && window.history.length > 1;
   const details = kind === 'crash' && error instanceof Error ? error : null;
+  // The server says how long to wait ("Try again in 4 minutes")
+  const waitMessage = kind === 'rate-limited' && error instanceof Error ? error.message : undefined;
 
   const body = (
     <div className="w-full max-w-lg mx-auto text-center py-12 sm:py-16 animate-rise">
@@ -75,7 +77,7 @@ export const ErrorScreen: React.FC<Props> = ({
         {ERROR_CODE[kind]}
       </p>
       <h1 className="mt-3 font-display text-2xl sm:text-3xl font-semibold tracking-tight">{title ?? copy.title}</h1>
-      <p className="mt-3 text-ink-2 max-w-md mx-auto">{message ?? copy.message}</p>
+      <p className="mt-3 text-ink-2 max-w-md mx-auto">{message ?? waitMessage ?? copy.message}</p>
 
       <div className="mt-8 flex flex-wrap justify-center gap-2">
         {kind === 'session' ? (
@@ -140,7 +142,7 @@ export const InlineError: React.FC<{ error: unknown; what: string; onRetry: () =
     <div role="alert" className="flex flex-wrap items-center justify-between gap-3 bg-danger-soft text-danger rounded-xl px-5 py-4">
       <p className="text-sm min-w-0">
         <span className="font-semibold">
-          {kind === 'offline' ? "Can't reach HackTrack." : kind === 'unavailable' ? 'HackTrack is temporarily unavailable.' : `Could not load ${what}.`}
+          {kind === 'offline' ? "Can't reach Hackcrew." : kind === 'unavailable' ? 'Hackcrew is temporarily unavailable.' : `Could not load ${what}.`}
         </span>{' '}
         {message}
       </p>

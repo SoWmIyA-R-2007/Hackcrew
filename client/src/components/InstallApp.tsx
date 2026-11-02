@@ -21,16 +21,16 @@ export const InstallButton: React.FC = () => {
       <button
         onClick={() => (installable ? promptInstall() : setShowIosSteps(true))}
         className="icon-btn lg:w-auto lg:px-2.5 lg:gap-1.5 text-sm"
-        aria-label="Install the HackTrack app"
-        title="Install the HackTrack app"
+        aria-label="Install the Hackcrew app"
+        title="Install the Hackcrew app"
       >
         <Download className="w-[18px] h-[18px]" />
         <span className="hidden lg:inline">Install app</span>
       </button>
       {showIosSteps && (
-        <Modal title="Install HackTrack" onClose={() => setShowIosSteps(false)}>
+        <Modal title="Install Hackcrew" onClose={() => setShowIosSteps(false)}>
           <div className="px-6 py-6 space-y-4 text-sm text-ink-2">
-            <p>Add HackTrack to your home screen to open it like an app, full screen and one tap away.</p>
+            <p>Add Hackcrew to your home screen to open it like an app, full screen and one tap away.</p>
             <ol className="space-y-3">
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-lg bg-sunken flex items-center justify-center shrink-0">
@@ -78,7 +78,7 @@ export const UpdateNotice: React.FC = () => {
       className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:w-96 z-[70] bg-surface border border-rule rounded-2xl shadow-2xl shadow-ink/20 px-5 py-4 flex items-start gap-3 animate-rise"
     >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">A new version of HackTrack is ready</p>
+        <p className="text-sm font-semibold">A new version of Hackcrew is ready</p>
         <p className="text-sm text-ink-2 mt-0.5">Reload to get the latest changes. Anything you saved is kept.</p>
         <button onClick={applyUpdate} className="btn btn-primary text-sm py-1.5 mt-3">
           Reload now

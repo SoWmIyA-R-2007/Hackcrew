@@ -1,6 +1,6 @@
-# HackTrack
+# Hackcrew
 
-Keep every hackathon you have registered for in one place. HackTrack puts all your submission deadlines on one timeline, keeps each problem statement next to its task list, and tracks who on the team owns what.
+Keep every hackathon you have registered for in one place. Hackcrew puts all your submission deadlines on one timeline, keeps each problem statement next to its task list, and tracks who on the team owns what.
 
 ## Features
 
@@ -24,9 +24,10 @@ Keep every hackathon you have registered for in one place. HackTrack puts all yo
 - **Profile page** (click your initials in the header): change your name or password, connect or disconnect Google, sign out of all devices, or permanently delete your account and its hackathons.
 - **Demo login**: one click opens a private, sample-filled account that deletes itself after 24 hours (see [Demo login](#demo-login)).
 - **Import**: hackathons saved in the browser by older versions of the app can be imported into an account.
+- **Rate limits**: repeated wrong passwords, mass sign-ups, email floods and scripts hammering the API are slowed down, with a message saying how long to wait. See [Rate limits](#rate-limits).
 - **Error pages**: clear screens for a missing page or item (404), no access (403), an ended session (401, which returns you to the same page after signing in), no connection (retries by itself when you are back online), the server or database being down (503/500), too many requests (429), a new version after a deploy, and unexpected crashes (with technical details).
 - **Loading**: a thin bar along the top while pages or data load, and skeletons shaped like the page. Both appear only when there is a noticeable wait, so fast pages never flicker. Pages are downloaded on demand, so the app starts faster.
-- **Installable app**: install HackTrack on a phone, tablet or computer and open it from the home screen or app list like any other app, full screen, with shortcuts to My tasks, Projects and Friends. It opens even without a connection and tells you when a new version is ready. See [Install as an app](#install-as-an-app).
+- **Installable app**: install Hackcrew on a phone, tablet or computer and open it from the home screen or app list like any other app, full screen, with shortcuts to My tasks, Projects and Friends. It opens even without a connection and tells you when a new version is ready. See [Install as an app](#install-as-an-app).
 - **Android app**: a real Android app (APK for sharing, AAB for Google Play) with its own icon and splash screen. It opens your deployed site, so it always matches the website, and has Android touches: the back button, links opening in the browser, calendar export through the share sheet, and Google sign-in through the phone's browser. See [Android app](#android-app).
 - Light and dark mode follow the system setting.
 
@@ -44,9 +45,11 @@ The repo uses npm workspaces, so one `npm install` at the root sets up both part
 
 You need Node.js 22.22 or newer (required by React Router 8) and a MongoDB database.
 
-1. Install dependencies:
+1. Get the code and install dependencies:
 
    ```bash
+   git clone https://github.com/SoWmIyA-R-2007/Hackcrew.git
+   cd Hackcrew
    npm install
    ```
 
@@ -88,7 +91,7 @@ All variables live in the root `.env.local` and are read only by the server (`se
 | `PORT` | No | Port the server listens on in production. Most hosts set it for you. Default `4000`. |
 | `BREVO_API_KEY` | No | Sends email through [Brevo](https://www.brevo.com) (free plan, about 300 emails a day, no domain needed). See [Email](#email). |
 | `RESEND_API_KEY` | No | Sends email through [Resend](https://resend.com) instead (needs a domain you own). Without either key, emails are printed in the server terminal. |
-| `EMAIL_FROM` | No | Sender, as `Name <address>`. With Brevo, the address must be a sender verified in your Brevo account; with Resend, it must be on a verified domain. Default `HackTrack <onboarding@resend.dev>`. |
+| `EMAIL_FROM` | No | Sender, as `Name <address>`. With Brevo, the address must be a sender verified in your Brevo account; with Resend, it must be on a verified domain. Default `Hackcrew <onboarding@resend.dev>`. |
 | `EMAIL_TRANSPORT` | No | `log` prints emails instead of sending them, whatever keys are set. `brevo` or `resend` picks the service when both keys are set (otherwise Brevo wins). |
 | `BREVO_API_URL` | No | Brevo API address. Default `https://api.brevo.com/v3`; only change it for tests. |
 | `REMINDER_INTERVAL_MINUTES` | No | How often the server checks for reminder emails to send. Default `15`; `0` turns the built-in check off. |
@@ -100,7 +103,7 @@ All variables live in the root `.env.local` and are read only by the server (`se
 
 Without an email API key (or with `EMAIL_TRANSPORT=log`), every email the app would send (verification links, password resets, invites, reminders, team updates) is printed in the terminal running `npm run dev`, between `[mail]` and `[/mail]`. Copy links from there while developing. Demo accounts never send email.
 
-When the server starts it says which service it uses, for example `Emails are sent through Brevo from HackTrack <you@gmail.com>.`
+When the server starts it says which service it uses, for example `Emails are sent through Brevo from Hackcrew <you@gmail.com>.`
 
 **Brevo (free, no domain needed).** The free plan sends about 300 emails a day.
 
@@ -111,7 +114,7 @@ When the server starts it says which service it uses, for example `Emails are se
 
    ```
    BREVO_API_KEY=xkeysib-...
-   EMAIL_FROM=HackTrack <the-address-you-verified@gmail.com>
+   EMAIL_FROM=Hackcrew <the-address-you-verified@gmail.com>
    ```
 
    and remove `EMAIL_TRANSPORT=log` if it is there. Restart `npm run dev`.
@@ -130,7 +133,7 @@ Each recipient gets their own copy, so team emails never show teammates each oth
 
 Until these are set, the Google button shows a message saying Google sign-in is not set up; email and password still work.
 
-**Connecting Google to an existing account.** On the profile page, **Connect Google** sends you to Google and back, then links that Google account to the account you are signed in to. Your password keeps working, so you can sign in either way. If the Google account uses the same email as your HackTrack account, your email also counts as verified. **Disconnect** removes the link again, as long as the account still has a password. A Google account can only be connected to one HackTrack account.
+**Connecting Google to an existing account.** On the profile page, **Connect Google** sends you to Google and back, then links that Google account to the account you are signed in to. Your password keeps working, so you can sign in either way. If the Google account uses the same email as your Hackcrew account, your email also counts as verified. **Disconnect** removes the link again, as long as the account still has a password. A Google account can only be connected to one Hackcrew account.
 
 **Signing in with Google when an account already uses that email.** Password sign-up does not confirm that people own their email address, so Google is treated as the proof. When a Google sign-in uses the email of an account whose email was never verified, the Google user takes that account over: its password and any other Google link are removed, and every session already signed in to it is signed out. This stops anyone from registering someone else's email in advance (and even connecting their own Google account to it) and keeping access once the real owner arrives. An account whose email is verified keeps its existing Google link, and a different Google account cannot claim it.
 
@@ -203,6 +206,27 @@ Profiles are private until you turn yours on under **Profile → Public profile*
 
 The heatmap counts, for each day of the last year, how many hackathons you were part of from kickoff to the later of the submission deadline and the final presentation (at most 60 days per hackathon), so it fills in from the dates you already track.
 
+## Rate limits
+
+Limits that protect accounts are counted in MongoDB (the `rate_limits` collection, cleaned up automatically), so they still apply after the server restarts or wakes from sleep. Anyone over a limit gets a `429` answer with a `Retry-After` header, and the app says how long to wait, for example "Too many failed sign-in attempts. Try again in 14 minutes."
+
+| What | Limit |
+| --- | --- |
+| Wrong passwords for one account from one network | 10 per 15 minutes. Signing in correctly resets it |
+| Wrong passwords for one account from anywhere | 50 per hour |
+| Wrong passwords from one network, any account | 100 per 15 minutes |
+| Wrong current password when changing it | 10 per 15 minutes per account |
+| New accounts from one network | 30 per hour |
+| Password reset requests from one network | 20 per hour |
+| Verification and reset emails to one address | 5 per hour |
+| Emailed links and Android sign-in codes checked from one network | 30 per 15 minutes |
+| Demo accounts from one network | 30 per hour |
+| All API requests | 600 per 5 minutes per signed-in account (per network when signed out) |
+| Emailing the team | Once every 10 minutes per hackathon |
+| GitHub refresh | Once every 30 seconds per project |
+
+Limits per network are generous because everyone at a hackathon venue may share one Wi-Fi address; the per-account limits are what stop password guessing. The overall API limit is kept in memory (it runs on every request), so a restart gives a fresh allowance. To change any number, edit the constants at the top of `server/src/routes/auth.ts` and in `server/src/rate-limit.ts`.
+
 ## Scripts
 
 Run these from the repo root.
@@ -240,7 +264,7 @@ Express serves both the API and the built React app from one port, so the app de
 
 ## Install as an app
 
-HackTrack is a Progressive Web App: no app store, nothing to pay, and it works on Android, iPhone, iPad, Windows, macOS, Linux and ChromeOS. Once it is deployed over HTTPS:
+Hackcrew is a Progressive Web App: no app store, nothing to pay, and it works on Android, iPhone, iPad, Windows, macOS, Linux and ChromeOS. Once it is deployed over HTTPS:
 
 - **Android, or Chrome and Edge on a computer:** click **Install app** in the header (or the install icon in the address bar) and confirm.
 - **iPhone and iPad:** open the site in Safari, tap **Install app** in the header for the steps, or tap **Share → Add to Home Screen** directly.
@@ -250,14 +274,14 @@ The installed app opens full screen from its own icon, and a long press on the i
 How it behaves:
 
 - **Updates:** each deploy is picked up when the app is opened or comes back to the foreground. A small notice says a new version is ready; **Reload now** switches to it. Nothing changes in the middle of someone's work.
-- **Offline:** the app itself is saved on the device, so it opens without a connection and shows a "Can't reach HackTrack" screen that retries by itself when the connection is back.
+- **Offline:** the app itself is saved on the device, so it opens without a connection and shows a "Can't reach Hackcrew" screen that retries by itself when the connection is back.
 - **Privacy:** account data (hackathons, tasks, projects, profiles) is never stored by the app's offline cache; it always comes from the server.
 
 The offline part (`client/public/sw.js`) only runs in a production build. To try it locally, run `npm run build` and then `npm start`, and open `http://localhost:4000` (browsers allow it on `localhost` without HTTPS). After changing `sw.js`, raise `VERSION` at its top so old caches are cleared.
 
 ## Android app
 
-The `mobile/` folder builds HackTrack as an Android app with [Capacitor](https://capacitorjs.com). The app is a native shell that opens your deployed HackTrack site, so sign-in, data and every new deploy work exactly as on the web without publishing a new app version.
+The `mobile/` folder builds Hackcrew as an Android app with [Capacitor](https://capacitorjs.com). The app is a native shell that opens your deployed Hackcrew site, so sign-in, data and every new deploy work exactly as on the web without publishing a new app version.
 
 What the app adds on top of the website:
 
@@ -265,7 +289,7 @@ What the app adds on top of the website:
 - The Android back button closes an open dialog, goes back a page, or leaves the app from the first page.
 - Links to other sites open in the phone's browser; calendar exports open Android's share sheet (Google Calendar, Drive, …).
 - The status bar follows the light or dark theme.
-- A built-in "Can't reach HackTrack" screen when there is no connection, which reconnects by itself.
+- A built-in "Can't reach Hackcrew" screen when there is no connection, which reconnects by itself.
 - **Google sign-in:** Google blocks its sign-in page inside apps, so the app opens it in the phone's browser. When it finishes, the browser hands a one-time code back to the app (`com.hacktrack.app://auth`). The code only works together with a secret the app kept (PKCE), expires after 2 minutes and works once. Connecting Google to an existing account is done on the website.
 
 ### Build it
@@ -273,41 +297,41 @@ What the app adds on top of the website:
 You need JDK 21 and the Android SDK (installing [Android Studio](https://developer.android.com/studio) gives you both), and `ANDROID_HOME` pointing at the SDK.
 
 ```bash
-HACKTRACK_URL=https://your-hacktrack-site.example.com npm run android:build
+HACKCREW_URL=https://your-hackcrew-site.example.com npm run android:build
 ```
 
 The APK is written to `mobile/android/app/build/outputs/apk/debug/app-debug.apk`. Install it with `adb install` on a phone connected by USB, or send the file to a phone and open it (allow installing from that app when Android asks).
 
-`HACKTRACK_URL` is the deployed site the app opens; it is baked in when you build, so rebuild if it changes. Use your HTTPS address for real use. Other commands: `npm run android:sync` (apply changes to the Android project) and `npm run android:open` (open it in Android Studio to run it on an emulator or phone).
+`HACKCREW_URL` is the deployed site the app opens; it is baked in when you build, so rebuild if it changes. Use your HTTPS address for real use. Other commands: `npm run android:sync` (apply changes to the Android project) and `npm run android:open` (open it in Android Studio to run it on an emulator or phone).
 
 ### Try it before deploying
 
-- **Android emulator:** run `npm run dev`, then build without `HACKTRACK_URL`. The app opens `http://10.0.2.2:5173`, which is the emulator's way of reaching your computer.
-- **Phone on the same Wi-Fi:** run `npm run dev:phone` (the normal dev servers, reachable from other devices), find your computer's Wi-Fi address (`ip -4 addr` on Linux, `ipconfig` on Windows), then build with `HACKTRACK_URL=http://<that address>:5173 npm run android:build`. Keep `npm run dev:phone` running while you use the app, and keep the phone on the same Wi-Fi. If the phone still can't connect, open `http://<that address>:5173` in the phone's browser: if that fails too, your computer's firewall is blocking port 5173. Plain `http` is allowed only for this kind of testing; always use `https` for real use, and Google sign-in only works on the deployed site.
+- **Android emulator:** run `npm run dev`, then build without `HACKCREW_URL`. The app opens `http://10.0.2.2:5173`, which is the emulator's way of reaching your computer.
+- **Phone on the same Wi-Fi:** run `npm run dev:phone` (the normal dev servers, reachable from other devices), find your computer's Wi-Fi address (`ip -4 addr` on Linux, `ipconfig` on Windows), then build with `HACKCREW_URL=http://<that address>:5173 npm run android:build`. Keep `npm run dev:phone` running while you use the app, and keep the phone on the same Wi-Fi. If the phone still can't connect, open `http://<that address>:5173` in the phone's browser: if that fails too, your computer's firewall is blocking port 5173. Plain `http` is allowed only for this kind of testing; always use `https` for real use, and Google sign-in only works on the deployed site.
 
-A build without `HACKTRACK_URL` only works in the emulator; on a real phone it shows "Can't reach HackTrack". The build prints a warning when that happens, and the app's offline screen shows the address it tried.
+A build without `HACKCREW_URL` only works in the emulator; on a real phone it shows "Can't reach Hackcrew". The build prints a warning when that happens, and the app's offline screen shows the address it tried.
 
 ### Publish on Google Play
 
 1. Create an upload key once and keep it safe (losing it means you cannot update the app):
 
    ```bash
-   keytool -genkey -v -keystore mobile/android/hacktrack-upload.jks -alias hacktrack -keyalg RSA -keysize 2048 -validity 10000
+   keytool -genkey -v -keystore mobile/android/hackcrew-upload.jks -alias hackcrew -keyalg RSA -keysize 2048 -validity 10000
    ```
 
 2. Create `mobile/android/keystore.properties` (git-ignored, like the key itself):
 
    ```
-   storeFile=hacktrack-upload.jks
+   storeFile=hackcrew-upload.jks
    storePassword=...
-   keyAlias=hacktrack
+   keyAlias=hackcrew
    keyPassword=...
    ```
 
 3. Raise `versionCode` (and `versionName`) in `mobile/android/app/build.gradle` for every upload, then run:
 
    ```bash
-   HACKTRACK_URL=https://your-hacktrack-site.example.com npm run build:release -w mobile
+   HACKCREW_URL=https://your-hackcrew-site.example.com npm run build:release -w mobile
    ```
 
 4. Upload `mobile/android/app/build/outputs/bundle/release/app-release.aab` in the [Google Play Console](https://play.google.com/console) (a one-time $25 developer account). A signed APK for sharing directly is in `outputs/apk/release/`.
@@ -341,7 +365,7 @@ client/
     sw.js                   Service worker: offline app shell and updates (production builds only)
     icons/                  App icons (any and maskable) and the iPhone home screen icon
 mobile/
-  capacitor.config.ts       App id, name, the site it opens (HACKTRACK_URL) and splash settings
+  capacitor.config.ts       App id, name, the site it opens (HACKCREW_URL) and splash settings
   scripts/prepare.mjs       Writes the built-in offline page with the site address
   assets/                   Icon and splash sources, and generate.sh to render them
   android/                  The Android Studio project (Capacitor), including signing for Play
@@ -356,6 +380,7 @@ server/
     sample-data.ts          Sample hackathons for new accounts and demos, and the demo project
     mailer.ts, emails.ts    Sending email (Brevo, Resend or the log) and every email's wording
     tokens.ts               Single-use links for email confirmation and password reset
+    rate-limit.ts           Rate limits counted in MongoDB, and the overall API limit
     reminders.ts            Finds and sends due reminder emails
     calendar.ts             Builds .ics calendar files
     google-account.ts       Rules for linking Google accounts
@@ -465,6 +490,7 @@ A hackathon you are not on the team of, or a project you are not on, always retu
 
 | Problem | Fix |
 | --- | --- |
+| "Too many failed sign-in attempts" or another "Try again in …" message | A rate limit was reached; wait the time shown. To clear limits during development, delete the documents in the `rate_limits` collection and restart the server. See [Rate limits](#rate-limits). |
 | "The app cannot reach its database right now" on the login page, or `Cannot reach MongoDB` in the server log | MongoDB is not reachable. Locally, run `npm run db`. With Atlas, check `MONGODB_URI` and that your current IP is allowed under **Network Access**. |
 | `SESSION_SECRET must be set` | Add a `SESSION_SECRET` of at least 32 characters to `.env.local` and restart. |
 | Changes to `.env.local` have no effect | The server reads it only at startup. Stop `npm run dev` and start it again. |

@@ -23,7 +23,7 @@ export function isDeliverable(email: string) {
 }
 
 function toText(mail: Mail) {
-  return [...mail.paragraphs, ...(mail.button ? [`${mail.button.label}: ${mail.button.url}`] : []), '— HackTrack'].join(
+  return [...mail.paragraphs, ...(mail.button ? [`${mail.button.label}: ${mail.button.url}`] : []), '— Hackcrew'].join(
     '\n\n'
   );
 }
@@ -35,15 +35,15 @@ function toHtml(mail: Mail) {
   const button = mail.button
     ? `<p style="margin:20px 0"><a href="${escapeHtml(mail.button.url)}" style="background:#2b44c9;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">${escapeHtml(mail.button.label)}</a></p>`
     : '';
-  return `<div style="font-family:system-ui,sans-serif;color:#18213a;max-width:560px">${paragraphs}${button}<p style="color:#7c8598;font-size:13px">HackTrack</p></div>`;
+  return `<div style="font-family:system-ui,sans-serif;color:#18213a;max-width:560px">${paragraphs}${button}<p style="color:#7c8598;font-size:13px">Hackcrew</p></div>`;
 }
 
-/** "HackTrack <team@example.com>" as a name and an address */
+/** "Hackcrew <team@example.com>" as a name and an address */
 export function parseSender(from: string) {
   const match = /^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$/.exec(from);
   return match
-    ? { name: match[1].replace(/^"|"$/g, '') || 'HackTrack', email: match[2] }
-    : { name: 'HackTrack', email: from.trim() };
+    ? { name: match[1].replace(/^"|"$/g, '') || 'Hackcrew', email: match[2] }
+    : { name: 'Hackcrew', email: from.trim() };
 }
 
 /** Sends one copy to one recipient through the configured service; returns an error message or null */

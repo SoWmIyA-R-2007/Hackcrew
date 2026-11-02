@@ -64,11 +64,11 @@ export const ERROR_COPY: Record<ErrorKind, { title: string; message: string }> =
     message: 'For your security you were signed out. Sign in again to pick up where you left off.',
   },
   offline: {
-    title: "Can't reach HackTrack",
+    title: "Can't reach Hackcrew",
     message: 'Check your internet connection. This page tries again by itself as soon as you are back online.',
   },
   unavailable: {
-    title: 'HackTrack is temporarily unavailable',
+    title: 'Hackcrew is temporarily unavailable',
     message: 'The server cannot reach its database right now. Your data is safe; try again in a minute.',
   },
   'rate-limited': {
@@ -80,7 +80,7 @@ export const ERROR_COPY: Record<ErrorKind, { title: string; message: string }> =
     message: 'The server ran into a problem. Try again; if it keeps happening, let the team know.',
   },
   update: {
-    title: 'HackTrack has been updated',
+    title: 'Hackcrew has been updated',
     message: 'A newer version is available. Reload the page to get it.',
   },
   crash: {

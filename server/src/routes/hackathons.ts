@@ -173,8 +173,8 @@ hackathonsRouter.get('/calendar.ics', async (_req, res) => {
   const docs = await hackathons.find(accessFilter(currentUserId(res))).toArray();
   res
     .type('text/calendar; charset=utf-8')
-    .attachment('hacktrack-deadlines.ics')
-    .send(buildCalendar('HackTrack deadlines', docs));
+    .attachment('hackcrew-deadlines.ics')
+    .send(buildCalendar('Hackcrew deadlines', docs));
 });
 
 // Open tasks assigned to the signed-in user across all their hackathons
@@ -338,7 +338,7 @@ async function inviteAccount(doc: HackathonDoc, inviter: UserDoc, target: UserDo
   return { hackathon: updated!, emailed };
 }
 
-// Add someone to the team list and invite them to join on HackTrack
+// Add someone to the team list and invite them to join on Hackcrew
 hackathonsRouter.post('/:id/team', async (req, res) => {
   const filter = accessibleById(req.params.id, res);
   if (!filter) return notFound(res);
