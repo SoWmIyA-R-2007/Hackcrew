@@ -1,9 +1,8 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# HackTrack project notes
 
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+- npm workspaces: `client/` (React + Vite + React Router 8 + Tailwind 4) and `server/` (Express 5 + MongoDB driver, run with tsx).
+- `npm run dev` starts both; Vite proxies `/api` to Express on port 4000. Env vars live in the root `.env.local` and are loaded only by the server (`server/src/env.ts`).
+- The server imports `HackathonView` from `client/src/lib/types.ts` as a type only; keep that file free of runtime code the server would need.
+- Server code uses NodeNext module resolution, so relative imports need `.js` extensions.
+- Design tokens (colors, fonts, `.btn`, `.field`) are defined in `client/src/index.css`; use them instead of raw Tailwind colors.
+- Check with `npm run typecheck` and `npm run lint`.

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "dev-test-db",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["MONGODB_URI=mongodb://127.0.0.1:27018", "MONGODB_DB=hacktrack_test", "API_PORT=4010", "APP_URL=http://localhost:5180", "EMAIL_TRANSPORT=log", "REMINDER_INTERVAL_MINUTES=0", "CRON_SECRET=test-cron-secret", "sh", "-c", "npm run dev -w server & exec npm run dev -w client -- --port 5180 --strictPort"],
+      "port": 5180
+    }
+  ]
+}
